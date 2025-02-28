@@ -23,7 +23,7 @@ contract FaceBuddyTest is Test {
     address UNIVERSAL_ROUTER;
     address POOL_MANAGER;
     address PERMIT2;
-    address WETH;
+ 
     address USDC;
 
     function setUp() public {
@@ -32,7 +32,7 @@ contract FaceBuddyTest is Test {
         UNIVERSAL_ROUTER = vm.envAddress("UNIVERSAL_ROUTER");
         POOL_MANAGER = vm.envAddress("POOL_MANAGER");
         PERMIT2 = vm.envAddress("PERMIT2");
-        WETH = vm.envAddress("WETH");
+
         USDC = vm.envAddress("USDC");
 
         // Create and select fork
@@ -67,17 +67,14 @@ contract FaceBuddyTest is Test {
         assertEq(address(faceBuddy).balance, 10 ether);
     }
 
-    function testApproveTokenWithPermit2() public {
-        faceBuddy.approveTokenWithPermit2(address(WETH), uint160(10 ether), uint48(block.timestamp + 1 days));
-       
-    }
 
     function testSwapETH() public {
+        // Mint ETH to the contract
         testMintETH();
-        testApproveTokenWithPermit2();
-        
+
+
         PoolKey memory key = PoolKey({
-            currency0: Currency.wrap(address(0)),
+            currency0: Currency.wrap(address(0)),  // ETH
             currency1: Currency.wrap(USDC),
             fee: 500,
             tickSpacing: 10,
@@ -87,6 +84,12 @@ contract FaceBuddyTest is Test {
         bytes32 poolId = PoolId.unwrap(key.toId());
         console.logBytes32(poolId);
 
-        faceBuddy.swapExactInputSingle(key, 1 ether, 1000000, block.timestamp + 1 days);
+        // Send value with the transaction
+        faceBuddy.swapExactInputSingle{value: 1 ether}(
+            key, 
+            1 ether,
+            1000000, 
+            block.timestamp + 1 days
+        );
     }
 } 

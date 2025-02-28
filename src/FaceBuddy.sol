@@ -41,41 +41,41 @@ function swapExactInputSingle(
     uint128 amountIn, // Exact amount of tokens to swap
     uint128 minAmountOut, // Minimum amount of output tokens expected
     uint256 deadline // Timestamp after which the transaction will revert
-) external {
+) external payable {
     bytes memory commands = abi.encodePacked(uint8(Commands.V4_SWAP));
-bytes[] memory inputs = new bytes[](1);
+    bytes[] memory inputs = new bytes[](1);
     // Encode V4Router actions
-bytes memory actions = abi.encodePacked(
-    uint8(Actions.SWAP_EXACT_IN_SINGLE),
-    uint8(Actions.SETTLE_ALL),
-    uint8(Actions.TAKE_ALL)
-);
+    bytes memory actions = abi.encodePacked(
+        uint8(Actions.SWAP_EXACT_IN_SINGLE),
+        uint8(Actions.SETTLE_ALL),
+        uint8(Actions.TAKE_ALL)
+    );
 
-bytes[] memory params = new bytes[](3);
+    bytes[] memory params = new bytes[](3);
 
-// First parameter: swap configuration
-params[0] = abi.encode(
-    IV4Router.ExactInputSingleParams({
-        poolKey: key,
-        zeroForOne: true,            // true if we're swapping token0 for token1
-        amountIn: amountIn,          // amount of tokens we're swapping
-        amountOutMinimum: minAmountOut, // minimum amount we expect to receive
-        hookData: bytes("")             // no hook data needed
-    })
-);
+    // First parameter: swap configuration
+    params[0] = abi.encode(
+        IV4Router.ExactInputSingleParams({
+            poolKey: key,
+            zeroForOne: true,            // true if we're swapping token0 for token1
+            amountIn: amountIn,          // amount of tokens we're swapping
+            amountOutMinimum: minAmountOut, // minimum amount we expect to receive
+            hookData: bytes("")             // no hook data needed
+        })
+    );
 
-// Second parameter: specify input tokens for the swap
-// encode SETTLE_ALL parameters
-params[1] = abi.encode(key.currency0, amountIn);
+    // Second parameter: specify input tokens for the swap
+    // encode SETTLE_ALL parameters
+    params[1] = abi.encode(key.currency0, amountIn);
 
-// Third parameter: specify output tokens from the swap
-params[2] = abi.encode(key.currency1, minAmountOut);
+    // Third parameter: specify output tokens from the swap
+    params[2] = abi.encode(key.currency1, minAmountOut);
 
-// Combine actions and params into inputs
-inputs[0] = abi.encode(actions, params);
+    // Combine actions and params into inputs
+    inputs[0] = abi.encode(actions, params);
 
-// Execute the swap
-router.execute(commands, inputs, deadline);
+    // Execute the swap and forward the ETH value
+    router.execute{value: msg.value}(commands, inputs, deadline);
 }
 
 
