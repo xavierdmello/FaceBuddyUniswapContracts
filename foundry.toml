@@ -4,7 +4,7 @@ out = "out"
 libs = ["lib"]
 evm_version = 'cancun'
 # Set Unichain Sepolia as default network
-rpc_url = "https://sepolia.unichain.org"
+rpc_url = "https://mainnet.unichain.org"
 # Enable optimizer with 200 runs
 optimizer = true
 optimizer_runs = 200
@@ -12,7 +12,9 @@ optimizer_runs = 200
 
 [rpc_endpoints]
 unichain_sepolia = "https://sepolia.unichain.org"
+unichain = "https://mainnet.unichain.org"
 
 [etherscan]
-unichain_sepolia = { key = "${UNISCAN_API_KEY}", url = "https://sepolia.uniscan.xyz/" }
+unichain_sepolia = { key = "${UNISCAN_API_KEY}", url = "https://api-sepolia.uniscan.xyz/api" }
+unichain = { key = "${UNISCAN_API_KEY}", url = "https://api.uniscan.xyz/api", chain=130 }
 

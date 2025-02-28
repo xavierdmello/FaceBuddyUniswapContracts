@@ -40,7 +40,7 @@ function swapExactInputSingle(
     uint128 amountIn, // Exact amount of tokens to swap
     uint128 minAmountOut, // Minimum amount of output tokens expected
     uint256 deadline // Timestamp after which the transaction will revert
-) external returns (uint256 amountOut) {
+) external {
     bytes memory commands = abi.encodePacked(uint8(Commands.V4_SWAP));
 bytes[] memory inputs = new bytes[](1);
     // Encode V4Router actions
@@ -76,4 +76,6 @@ inputs[0] = abi.encode(actions, params);
 // Execute the swap
 router.execute(commands, inputs, deadline);
 }
+
+
 }
