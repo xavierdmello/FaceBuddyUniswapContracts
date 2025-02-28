@@ -42,8 +42,9 @@ contract FaceBuddy {
     permit2.approve(token, address(router), amount, expiration);
    
 }
- function setPreferredToken(address token) external {
-    preferredToken[msg.sender] = token;
+
+ function setPreferredToken(address token, address who) external {
+    preferredToken[who] = token;
  }
 
 function swapExactInputSingle(
