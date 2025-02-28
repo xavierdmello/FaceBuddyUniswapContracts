@@ -20,7 +20,7 @@ contract FaceBuddy {
     UniversalRouter public immutable router;
     IPoolManager public immutable poolManager;
     IPermit2 public immutable permit2;
-
+    mapping(address => address) public preferredToken;
     // Add receive function to accept ETH payments
     receive() external payable {}
     
@@ -42,6 +42,9 @@ contract FaceBuddy {
     permit2.approve(token, address(router), amount, expiration);
    
 }
+ function setPreferredToken(address token) external {
+    preferredToken[msg.sender] = token;
+ }
 
 function swapExactInputSingle(
     PoolKey memory key, // PoolKey struct that identifies the v4 pool
@@ -49,7 +52,7 @@ function swapExactInputSingle(
     uint128 minAmountOut, // Minimum amount of output tokens expected
     uint256 deadline, // Timestamp after which the transaction will revert
     bool zeroForOne // true if we're swapping token0 for token1
-) external payable {
+) public payable {
 
     // If token0 is ETH and we're swapping token1 to ETH, we need to transfer the token1 and approve it
     if (key.currency0 == Currency.wrap(address(0)) && zeroForOne ==  false) {
@@ -116,6 +119,61 @@ function swapExactInputSingle(
         payable(msg.sender).transfer(address(this).balance);
     }
 }
+
+
+ function swapAndSendPreferredToken(
+    address recipient,
+    address inputToken, // USDC address or address(0) for ETH
+    uint256 amount,
+    PoolKey memory poolKey,
+    uint128 minAmountOut,
+    uint256 deadline
+) external payable {
+    require(recipient != address(0), "Invalid recipient");
+    require(amount > 0, "Amount must be greater than 0");
+    
+    // Get recipient's preferred token
+    address preferredTokenAddr = preferredToken[recipient];
+    
+    // If no preference or preference matches input, send directly
+    if (preferredTokenAddr == address(0) || preferredTokenAddr == inputToken) {
+        if (inputToken == address(0)) {
+            require(msg.value == amount, "Incorrect ETH amount");
+            payable(recipient).transfer(amount);
+        } else {
+            IERC20(inputToken).transferFrom(msg.sender, recipient, amount);
+        }
+        return;
+    }
+
+    // Need to swap - determine swap direction
+    bool zeroForOne = poolKey.currency0 == Currency.wrap(inputToken);
+    require(
+        (zeroForOne && poolKey.currency1 == Currency.wrap(preferredTokenAddr)) ||
+        (!zeroForOne && poolKey.currency0 == Currency.wrap(preferredTokenAddr)),
+        "Invalid pool for swap"
+    );
+
+    // Handle the swap
+    swapExactInputSingle(
+        poolKey,
+        uint128(amount),
+        minAmountOut,
+        deadline,
+        zeroForOne
+    );
+
+    // Transfer the swapped tokens to recipient
+    if (preferredTokenAddr == address(0)) {
+        payable(recipient).transfer(address(this).balance);
+    } else {
+        IERC20(preferredTokenAddr).transfer(
+            recipient,
+            IERC20(preferredTokenAddr).balanceOf(address(this))
+        );
+    }
+}
+
 
 
 }
