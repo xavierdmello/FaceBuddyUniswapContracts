@@ -20,6 +20,9 @@ contract FaceBuddyTest is Test {
     string RPC_URL;
     // using PoolIdLibrary for PoolKey global;
 
+    // Add receive function to accept ETH
+    receive() external payable {}
+    
     // Unichain mainnet addresses (loaded from env)
     address UNIVERSAL_ROUTER;
     address POOL_MANAGER;
@@ -64,20 +67,19 @@ contract FaceBuddyTest is Test {
     }
 
     function testMintETH() public {
-        StdCheats.deal(address(msg.sender), 10 ether);
-        assertEq(address(msg.sender).balance, 10 ether);
+        StdCheats.deal(address(this), 10 ether);
+        assertEq(address(this).balance, 10 ether);
     }
 
     function testMintUSDC() public {
-        StdCheats.deal(USDC, address(msg.sender), 1 ether);
-        assertEq(IERC20(USDC).balanceOf(address(msg.sender)), 1 ether);
+        // Mint to the test contract address instead of msg.sender
+        StdCheats.deal(USDC, address(this), 1000000); // 1 USDC = 1e6 units
+        assertEq(IERC20(USDC).balanceOf(address(this)), 1000000);
     }
-
 
     function testSwapETH() public payable {
         // Mint ETH
         testMintETH();
-
 
         PoolKey memory key = PoolKey({
             currency0: Currency.wrap(address(0)),  // ETH
@@ -98,15 +100,15 @@ contract FaceBuddyTest is Test {
             block.timestamp + 1 days,
             true
         );
-        
     }
 
     function testApproveUSDC() public {
+        // Approve from the test contract address
         IERC20(USDC).approve(address(faceBuddy), 1000000);
     }
 
     function testSwapUSDC() public {
-        // Mint USDC
+        // Mint USDC to this contract
         testMintUSDC();
         testApproveUSDC();
     
@@ -127,7 +129,7 @@ contract FaceBuddyTest is Test {
             1000000,  // amount of USDC to swap
             1,        // minimum ETH to receive (very low for testing)
             block.timestamp + 1 days,
-            false      // true because we're swapping token1 (USDC) for token0 (ETH)
+            false     // false because we're swapping token1 (USDC) for token0 (ETH)
         );
     }
 } 
