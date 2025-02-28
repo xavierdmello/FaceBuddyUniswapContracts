@@ -101,12 +101,12 @@ contract FaceBuddyTest is Test {
     }
 
     function testSwapUSDC() public {
-    // Mint USDC to the contract
-    testMintUSDC();
+        // Mint USDC to the contract
+        testMintUSDC();
 
         faceBuddy.approveTokenWithPermit2(USDC, 1000000, uint48(block.timestamp + 1 days));
     
-         PoolKey memory key = PoolKey({
+        PoolKey memory key = PoolKey({
             currency0: Currency.wrap(address(0)),  // ETH
             currency1: Currency.wrap(USDC),
             fee: 500,
@@ -114,19 +114,17 @@ contract FaceBuddyTest is Test {
             hooks: IHooks(address(0))
         });
         
-
-                bytes32 poolId = PoolId.unwrap(key.toId());
+        bytes32 poolId = PoolId.unwrap(key.toId());
         console.logBytes32(poolId);
         
         // Send value with the transaction
         faceBuddy.swapExactInputSingle(
             key, 
-            1000000,
-            100, 
+            1000000,  // amount of USDC to swap
+            1,        // minimum ETH to receive (very low for testing)
             block.timestamp + 1 days,
-            false
+            false      // true because we're swapping token1 (USDC) for token0 (ETH)
         );
-
-}
+    }
 } 
 

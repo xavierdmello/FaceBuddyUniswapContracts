@@ -20,6 +20,12 @@ contract FaceBuddy {
     IPoolManager public immutable poolManager;
     IPermit2 public immutable permit2;
 
+    // Add receive function to accept ETH payments
+    receive() external payable {}
+    
+    // Add fallback function as a backup
+    fallback() external payable {}
+
     constructor(address payable _router, address _poolManager, address _permit2) {
         router = UniversalRouter(_router);
         poolManager = IPoolManager(_poolManager);
@@ -67,10 +73,16 @@ function swapExactInputSingle(
 
     // Second parameter: specify input tokens for the swap
     // encode SETTLE_ALL parameters
-    params[1] = abi.encode(key.currency0, amountIn);
+    params[1] = abi.encode(
+        zeroForOne ? key.currency0 : key.currency1,  // Input token
+        amountIn
+    );
 
     // Third parameter: specify output tokens from the swap
-    params[2] = abi.encode(key.currency1, minAmountOut);
+    params[2] = abi.encode(
+        zeroForOne ? key.currency1 : key.currency0,  // Output token
+        minAmountOut
+    );
 
     // Combine actions and params into inputs
     inputs[0] = abi.encode(actions, params);
