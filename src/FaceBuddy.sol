@@ -33,6 +33,7 @@ contract FaceBuddy {
 ) external {
     IERC20(token).approve(address(permit2), type(uint256).max);
     permit2.approve(token, address(router), amount, expiration);
+   
 }
 
 function swapExactInputSingle(

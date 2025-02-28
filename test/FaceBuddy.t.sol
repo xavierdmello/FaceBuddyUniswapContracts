@@ -6,19 +6,37 @@ import {FaceBuddy} from "../src/FaceBuddy.sol";
 import {UniversalRouter} from "@uniswap/universal-router/contracts/UniversalRouter.sol";
 import {IPoolManager} from "@uniswap/v4-core/src/interfaces/IPoolManager.sol";
 import {IPermit2} from "@uniswap/permit2/src/interfaces/IPermit2.sol";
-
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {PoolKey} from "@uniswap/v4-core/src/types/PoolKey.sol";
+import {IHooks} from "@uniswap/v4-core/src/interfaces/IHooks.sol";
+import "@forge-std/StdCheats.sol";
+import {Currency} from "@uniswap/v4-core/src/types/Currency.sol";
+import {console} from "forge-std/console.sol";
+import {PoolId} from "@uniswap/v4-core/src/types/PoolId.sol";
 contract FaceBuddyTest is Test {
     FaceBuddy public faceBuddy;
     uint256 mainnetFork;
+    string RPC_URL;
+    // using PoolIdLibrary for PoolKey global;
 
-    // Unichain mainnet addresses (checksummed)
-    address constant UNIVERSAL_ROUTER = 0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD;
-    address constant POOL_MANAGER = 0x70d04384b5C3A466ec7fF682e7C8e9185AED9932;
-    address constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
+    // Unichain mainnet addresses (loaded from env)
+    address UNIVERSAL_ROUTER;
+    address POOL_MANAGER;
+    address PERMIT2;
+    address WETH;
+    address USDC;
 
     function setUp() public {
+        // Load environment variables
+        RPC_URL = vm.envString("RPC_URL");
+        UNIVERSAL_ROUTER = vm.envAddress("UNIVERSAL_ROUTER");
+        POOL_MANAGER = vm.envAddress("POOL_MANAGER");
+        PERMIT2 = vm.envAddress("PERMIT2");
+        WETH = vm.envAddress("WETH");
+        USDC = vm.envAddress("USDC");
+
         // Create and select fork
-        mainnetFork = vm.createFork("https://unichain-mainnet.g.alchemy.com/v2/cCmdllUM3oiBjOpStn0RrTb8eifa87te");
+        mainnetFork = vm.createFork(RPC_URL);
         vm.selectFork(mainnetFork);
         
         // Verify we're on Unichain
@@ -42,5 +60,33 @@ contract FaceBuddyTest is Test {
         console2.log("FaceBuddy deployed at:", address(faceBuddy));
         console2.log("Block number:", block.number);
         console2.log("Chain ID:", block.chainid);
+    }
+
+    function testMintETH() public {
+        StdCheats.deal(address(faceBuddy), 10 ether);
+        assertEq(address(faceBuddy).balance, 10 ether);
+    }
+
+    function testApproveTokenWithPermit2() public {
+        faceBuddy.approveTokenWithPermit2(address(WETH), uint160(10 ether), uint48(block.timestamp + 1 days));
+       
+    }
+
+    function testSwapETH() public {
+        testMintETH();
+        testApproveTokenWithPermit2();
+        
+        PoolKey memory key = PoolKey({
+            currency0: Currency.wrap(address(0)),
+            currency1: Currency.wrap(USDC),
+            fee: 500,
+            tickSpacing: 10,
+            hooks: IHooks(address(0))
+        });
+        
+        bytes32 poolId = PoolId.unwrap(key.toId());
+        console.logBytes32(poolId);
+
+        faceBuddy.swapExactInputSingle(key, 1 ether, 1000000, block.timestamp + 1 days);
     }
 } 
