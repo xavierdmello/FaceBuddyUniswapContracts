@@ -13,7 +13,7 @@ import { Currency } from "@uniswap/v4-core/src/types/Currency.sol";
 import { IHooks } from "@uniswap/v4-core/src/interfaces/IHooks.sol";
 import { PoolKey } from "@uniswap/v4-core/src/types/PoolKey.sol";
 
-contract Example {
+contract FaceBuddy {
     using StateLibrary for IPoolManager;
 
     UniversalRouter public immutable router;
