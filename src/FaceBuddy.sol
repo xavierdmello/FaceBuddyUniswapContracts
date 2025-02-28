@@ -40,7 +40,8 @@ function swapExactInputSingle(
     PoolKey memory key, // PoolKey struct that identifies the v4 pool
     uint128 amountIn, // Exact amount of tokens to swap
     uint128 minAmountOut, // Minimum amount of output tokens expected
-    uint256 deadline // Timestamp after which the transaction will revert
+    uint256 deadline, // Timestamp after which the transaction will revert
+    bool zeroForOne // true if we're swapping token0 for token1
 ) external payable {
     bytes memory commands = abi.encodePacked(uint8(Commands.V4_SWAP));
     bytes[] memory inputs = new bytes[](1);
@@ -57,7 +58,7 @@ function swapExactInputSingle(
     params[0] = abi.encode(
         IV4Router.ExactInputSingleParams({
             poolKey: key,
-            zeroForOne: true,            // true if we're swapping token0 for token1
+            zeroForOne: zeroForOne,            // true if we're swapping token0 for token1
             amountIn: amountIn,          // amount of tokens we're swapping
             amountOutMinimum: minAmountOut, // minimum amount we expect to receive
             hookData: bytes("")             // no hook data needed

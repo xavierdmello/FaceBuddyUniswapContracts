@@ -67,6 +67,11 @@ contract FaceBuddyTest is Test {
         assertEq(address(faceBuddy).balance, 10 ether);
     }
 
+    function testMintUSDC() public {
+        StdCheats.deal(USDC, address(faceBuddy), 1 ether);
+        assertEq(IERC20(USDC).balanceOf(address(faceBuddy)), 1 ether);
+    }
+
 
     function testSwapETH() public {
         // Mint ETH to the contract
@@ -89,7 +94,39 @@ contract FaceBuddyTest is Test {
             key, 
             1 ether,
             1000000, 
-            block.timestamp + 1 days
+            block.timestamp + 1 days,
+            true
         );
+        
     }
+
+    function testSwapUSDC() public {
+    // Mint USDC to the contract
+    testMintUSDC();
+
+        faceBuddy.approveTokenWithPermit2(USDC, 1000000, uint48(block.timestamp + 1 days));
+    
+         PoolKey memory key = PoolKey({
+            currency0: Currency.wrap(address(0)),  // ETH
+            currency1: Currency.wrap(USDC),
+            fee: 500,
+            tickSpacing: 10,
+            hooks: IHooks(address(0))
+        });
+        
+
+                bytes32 poolId = PoolId.unwrap(key.toId());
+        console.logBytes32(poolId);
+        
+        // Send value with the transaction
+        faceBuddy.swapExactInputSingle(
+            key, 
+            1000000,
+            100, 
+            block.timestamp + 1 days,
+            false
+        );
+
+}
 } 
+
