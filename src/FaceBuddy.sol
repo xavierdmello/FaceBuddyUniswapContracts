@@ -154,7 +154,7 @@ function swapExactInputSingle(
         "Invalid pool for swap"
     );
 
-    // Handle the swap
+    // Handle the swap (this fn also handles the transfer)
     swapExactInputSingle(
         poolKey,
         uint128(amount),
@@ -162,16 +162,6 @@ function swapExactInputSingle(
         deadline,
         zeroForOne
     );
-
-    // Transfer the swapped tokens to recipient
-    if (preferredTokenAddr == address(0)) {
-        payable(recipient).transfer(address(this).balance);
-    } else {
-        IERC20(preferredTokenAddr).transfer(
-            recipient,
-            IERC20(preferredTokenAddr).balanceOf(address(this))
-        );
-    }
 }
 
 
