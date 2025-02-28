@@ -80,7 +80,7 @@ contract FaceBuddyTest is Test {
     function testSwapETH() public payable {
         // Mint ETH
         testMintETH();
-
+        console.log("USDC balance before swap:", IERC20(USDC).balanceOf(address(this)));
         PoolKey memory key = PoolKey({
             currency0: Currency.wrap(address(0)),  // ETH
             currency1: Currency.wrap(USDC),
@@ -100,6 +100,34 @@ contract FaceBuddyTest is Test {
             block.timestamp + 1 days,
             true
         );
+    }
+
+        function testSwapAndSendETHToUSDC() public payable {
+        // Mint ETH
+        testMintETH();
+
+        PoolKey memory key = PoolKey({
+            currency0: Currency.wrap(address(0)),  // ETH
+            currency1: Currency.wrap(USDC),
+            fee: 500,
+            tickSpacing: 10,
+            hooks: IHooks(address(0))
+        });
+        
+        bytes32 poolId = PoolId.unwrap(key.toId());
+        console.logBytes32(poolId);
+        faceBuddy.setPreferredToken(USDC);
+        // Send value with the transaction
+        faceBuddy.swapAndSendPreferredToken{value: 1 ether}(
+            address(this),
+            address(0),
+            1 ether,
+            key,
+            1000000,
+            block.timestamp + 1 days
+        );
+        console.log("USDC balance after swap:", IERC20(USDC).balanceOf(address(this)));
+
     }
 
     function testApproveUSDC() public {
@@ -132,5 +160,7 @@ contract FaceBuddyTest is Test {
             false     // false because we're swapping token1 (USDC) for token0 (ETH)
         );
     }
+
+    
 } 
 
