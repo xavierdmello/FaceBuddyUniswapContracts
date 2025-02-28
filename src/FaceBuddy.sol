@@ -13,9 +13,10 @@ import { Currency } from "@uniswap/v4-core/src/types/Currency.sol";
 import { IHooks } from "@uniswap/v4-core/src/interfaces/IHooks.sol";
 import { PoolKey } from "@uniswap/v4-core/src/types/PoolKey.sol";
 
+
 contract FaceBuddy {
     using StateLibrary for IPoolManager;
-
+    
     UniversalRouter public immutable router;
     IPoolManager public immutable poolManager;
     IPermit2 public immutable permit2;
@@ -36,7 +37,7 @@ contract FaceBuddy {
     address token,
     uint160 amount,
     uint48 expiration
-) external {
+) internal {
     IERC20(token).approve(address(permit2), type(uint256).max);
     permit2.approve(token, address(router), amount, expiration);
    
@@ -49,6 +50,19 @@ function swapExactInputSingle(
     uint256 deadline, // Timestamp after which the transaction will revert
     bool zeroForOne // true if we're swapping token0 for token1
 ) external payable {
+
+    // If token0 is ETH and we're swapping token1 to ETH, we need to transfer the token1 and approve it
+    if (key.currency0 == Currency.wrap(address(0)) && zeroForOne ==  false) {
+        IERC20(Currency.unwrap(key.currency1)).transferFrom(msg.sender, address(this), amountIn);
+        approveTokenWithPermit2(Currency.unwrap(key.currency1), amountIn, uint48(block.timestamp + 1 days));
+    }
+
+    // If token1 is ETH and we're swapping token0 to ETH, we need to transfer the token0 and approve it
+    if (key.currency1 == Currency.wrap(address(0)) && zeroForOne == true) {
+        IERC20(Currency.unwrap(key.currency0)).transferFrom(msg.sender, address(this), amountIn);
+        approveTokenWithPermit2(Currency.unwrap(key.currency0), amountIn, uint48(block.timestamp + 1 days));
+    }
+
     bytes memory commands = abi.encodePacked(uint8(Commands.V4_SWAP));
     bytes[] memory inputs = new bytes[](1);
     // Encode V4Router actions
@@ -89,6 +103,18 @@ function swapExactInputSingle(
 
     // Execute the swap and forward the ETH value
     router.execute{value: msg.value}(commands, inputs, deadline);
+
+    if (!(key.currency1 == Currency.wrap(address(0))) && zeroForOne == true) {
+        IERC20(Currency.unwrap(key.currency1)).transfer(msg.sender, IERC20(Currency.unwrap(key.currency1)).balanceOf(address(this)));
+    }
+
+    else if (!(key.currency0 == Currency.wrap(address(0))) && zeroForOne == false) {
+        IERC20(Currency.unwrap(key.currency0)).transfer(msg.sender, IERC20(Currency.unwrap(key.currency0)).balanceOf(address(this)));
+    }
+
+    else {
+        payable(msg.sender).transfer(address(this).balance);
+    }
 }
 
 

@@ -13,6 +13,7 @@ import "@forge-std/StdCheats.sol";
 import {Currency} from "@uniswap/v4-core/src/types/Currency.sol";
 import {console} from "forge-std/console.sol";
 import {PoolId} from "@uniswap/v4-core/src/types/PoolId.sol";
+
 contract FaceBuddyTest is Test {
     FaceBuddy public faceBuddy;
     uint256 mainnetFork;
@@ -63,18 +64,18 @@ contract FaceBuddyTest is Test {
     }
 
     function testMintETH() public {
-        StdCheats.deal(address(faceBuddy), 10 ether);
-        assertEq(address(faceBuddy).balance, 10 ether);
+        StdCheats.deal(address(msg.sender), 10 ether);
+        assertEq(address(msg.sender).balance, 10 ether);
     }
 
     function testMintUSDC() public {
-        StdCheats.deal(USDC, address(faceBuddy), 1 ether);
-        assertEq(IERC20(USDC).balanceOf(address(faceBuddy)), 1 ether);
+        StdCheats.deal(USDC, address(msg.sender), 1 ether);
+        assertEq(IERC20(USDC).balanceOf(address(msg.sender)), 1 ether);
     }
 
 
-    function testSwapETH() public {
-        // Mint ETH to the contract
+    function testSwapETH() public payable {
+        // Mint ETH
         testMintETH();
 
 
@@ -100,11 +101,14 @@ contract FaceBuddyTest is Test {
         
     }
 
-    function testSwapUSDC() public {
-        // Mint USDC to the contract
-        testMintUSDC();
+    function testApproveUSDC() public {
+        IERC20(USDC).approve(address(faceBuddy), 1000000);
+    }
 
-        faceBuddy.approveTokenWithPermit2(USDC, 1000000, uint48(block.timestamp + 1 days));
+    function testSwapUSDC() public {
+        // Mint USDC
+        testMintUSDC();
+        testApproveUSDC();
     
         PoolKey memory key = PoolKey({
             currency0: Currency.wrap(address(0)),  // ETH
