@@ -11,9 +11,9 @@ contract FaceBuddyScript is Script {
     address public permit2;
 
     function setUp() public {
-        router = payable(vm.envAddress("ROUTER_ADDRESS"));
-        poolManager = vm.envAddress("POOL_MANAGER_ADDRESS");
-        permit2 = vm.envAddress("PERMIT2_ADDRESS");
+        router = payable(vm.envAddress("UNIVERSAL_ROUTER"));
+        poolManager = vm.envAddress("POOL_MANAGER");
+        permit2 = vm.envAddress("PERMIT2");
     }
 
     function run() public {

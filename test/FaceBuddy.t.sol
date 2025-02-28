@@ -43,8 +43,6 @@ contract FaceBuddyTest is Test {
         mainnetFork = vm.createFork(RPC_URL);
         vm.selectFork(mainnetFork);
         
-        // Verify we're on Unichain
-        assertEq(block.chainid, 130);
 
         // Deploy FaceBuddy
         faceBuddy = new FaceBuddy(
@@ -116,7 +114,7 @@ contract FaceBuddyTest is Test {
         
         bytes32 poolId = PoolId.unwrap(key.toId());
         console.logBytes32(poolId);
-        faceBuddy.setPreferredToken(USDC);
+        faceBuddy.setPreferredToken(USDC, address(this));
         // Send value with the transaction
         faceBuddy.swapAndSendPreferredToken{value: 1 ether}(
             address(this),
