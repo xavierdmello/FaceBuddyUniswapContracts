@@ -53,6 +53,7 @@ function swapExactInputSingle(
     uint128 minAmountOut, // Minimum amount of output tokens expected
     uint256 deadline, // Timestamp after which the transaction will revert
     bool zeroForOne // true if we're swapping token0 for token1
+    address recipient
 ) public payable {
 
     // If token0 is ETH and we're swapping token1 to ETH, we need to transfer the token1 and approve it
@@ -109,15 +110,15 @@ function swapExactInputSingle(
     router.execute{value: msg.value}(commands, inputs, deadline);
 
     if (!(key.currency1 == Currency.wrap(address(0))) && zeroForOne == true) {
-        IERC20(Currency.unwrap(key.currency1)).transfer(msg.sender, IERC20(Currency.unwrap(key.currency1)).balanceOf(address(this)));
+        IERC20(Currency.unwrap(key.currency1)).transfer(recipient, IERC20(Currency.unwrap(key.currency1)).balanceOf(address(this)));
     }
 
     else if (!(key.currency0 == Currency.wrap(address(0))) && zeroForOne == false) {
-        IERC20(Currency.unwrap(key.currency0)).transfer(msg.sender, IERC20(Currency.unwrap(key.currency0)).balanceOf(address(this)));
+        IERC20(Currency.unwrap(key.currency0)).transfer(recipient, IERC20(Currency.unwrap(key.currency0)).balanceOf(address(this)));
     }
 
     else {
-        payable(msg.sender).transfer(address(this).balance);
+        payable(recipient).transfer(address(this).balance);
     }
 }
 
